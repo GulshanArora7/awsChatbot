@@ -1,0 +1,78 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "awschatbot-helm.fullname" . }}
+  labels:
+{{ include "awschatbot-helm.labels" . | indent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "awschatbot-helm.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "awschatbot-helm.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+    spec:
+    {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+          - name: AWSBOT_SLACK_SIGNING_SECRET
+            valueFrom: 
+              secretKeyRef:
+                name: awschatbot-helm
+                key: awsbotslacksigningsecret
+          - name: AWSBOT_SLACK_TOKEN
+            valueFrom: 
+              secretKeyRef:
+                name: awschatbot-helm
+                key: awsbotslacktoken
+          - name: AWSBOT_SLACK_CHANNEL
+            valueFrom:
+              secretKeyRef:
+                name: awschatbot-helm
+                key: awsbotslackchannel
+          - name: AWS_ACCESS_KEY_ID
+            valueFrom:
+              secretKeyRef:
+                name: awschatbot-helm
+                key: awsaccesskeyid
+          - name: AWS_SECRET_ACCESS_KEY
+            valueFrom:
+              secretKeyRef:
+                name: awschatbot-helm
+                key: awssecretaccesskey
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.port }}
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.service.healthCheckPath }}
+              port: {{ .Values.service.port }}
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.service.healthCheckPath }}
+              port: {{ .Values.service.port }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+    {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}

@@ -48,7 +48,7 @@ func AwsGetInstances(awsRegion string, status string) []domain.EC2Dictionary {
 	for _, reservation := range result.Reservations {
 		for _, instance := range reservation.Instances {
 			if !strings.EqualFold(*instance.State.Name, "terminated") {
-				ec2dict := domain.EC2Dictionary{"InstanceId": *instance.InstanceId, "InstanceType": *instance.InstanceType, "PrivateIP": *instance.PrivateIpAddress, "State": *instance.State.Name, "ImageID": *instance.ImageId, "PublicIP": *instance.PublicIpAddress}
+				ec2dict := domain.EC2Dictionary{"InstanceId": *instance.InstanceId, "InstanceType": *instance.InstanceType, "PrivateIP": *instance.PrivateIpAddress, "State": *instance.State.Name, "ImageID": *instance.ImageId, "PublicIP": *instance.PublicIpAddress, "VpcID": *instance.VpcId, "SubnetID": *instance.SubnetId}
 				ec2data = append(ec2data, ec2dict)
 			}
 		}
@@ -84,7 +84,7 @@ func AwsGetInstancesTag(awsRegion string, tags map[string]string) []domain.EC2Di
 	for _, reservation := range result.Reservations {
 		for _, instance := range reservation.Instances {
 			if !strings.EqualFold(*instance.State.Name, "terminated") {
-				ec2dict := domain.EC2Dictionary{"InstanceId": *instance.InstanceId, "InstanceType": *instance.InstanceType, "PrivateIP": *instance.PrivateIpAddress, "State": *instance.State.Name, "ImageID": *instance.ImageId, "PublicIP": *instance.PublicIpAddress}
+				ec2dict := domain.EC2Dictionary{"InstanceId": *instance.InstanceId, "InstanceType": *instance.InstanceType, "PrivateIP": *instance.PrivateIpAddress, "State": *instance.State.Name, "ImageID": *instance.ImageId, "PublicIP": *instance.PublicIpAddress, "VpcID": *instance.VpcId, "SubnetID": *instance.SubnetId}
 				ec2data = append(ec2data, ec2dict)
 			}
 		}

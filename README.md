@@ -33,10 +33,10 @@ go build
 
 ## Prerequisites to run application in kubernetes
 
-* Locally running kubernetes cluster(minikube) or production punning kubernetes cluster in your environment
+* Locally running kubernetes cluster(minikube) or production running kubernetes cluster in your environment
 * Basic kubernetes tools like kubectl (to interact with kubernetes cluster), helm(for deployment)
 * CLI terminal to run all the commands
-* Access service health endpoint from any browser
+* Access service health-check endpoint from any browser
 
 ## Installation
 
@@ -84,7 +84,7 @@ http://localhost:9090/awschatbot/v1/health
 
 * Get ELB Details
 
-![Alt Text](https://raw.githubusercontent.com/GulshanArora7/awsChatbot/master/gif-image/elb_slack.gif)
+![Alt Text](https://raw.githubusercontent.com/GulshanArora7/awsChatbot/master/gif-image/elbv2_slack.gif)
 
 
 * Get SecurityGroup Details

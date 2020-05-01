@@ -36,6 +36,7 @@ func (repo Slack) EC2ephemeralMessage(channel string, message []domain.EC2Dictio
 		subnetField := slack.NewTextBlockObject("mrkdwn", fmt.Sprintf("*Subnet ID:*\n%s", v["SubnetID"]), false, false)
 		privateipField := slack.NewTextBlockObject("mrkdwn", fmt.Sprintf("*PrivateIP:*\n%s", v["PrivateIP"]), false, false)
 		publicipField := slack.NewTextBlockObject("mrkdwn", fmt.Sprintf("*PublicIP:*\n%s", v["PublicIP"]), false, false)
+		sgField := slack.NewTextBlockObject("mrkdwn", fmt.Sprintf("*SecurityGroup ID:*\n%s", v["SecurityGroupID"]), false, false)
 		amiField := slack.NewTextBlockObject("mrkdwn", fmt.Sprintf("*AMI-ID:*\n%s", v["ImageID"]), false, false)
 
 		fieldSlice := make([]*slack.TextBlockObject, 0)
@@ -46,6 +47,7 @@ func (repo Slack) EC2ephemeralMessage(channel string, message []domain.EC2Dictio
 		fieldSlice = append(fieldSlice, subnetField)
 		fieldSlice = append(fieldSlice, privateipField)
 		fieldSlice = append(fieldSlice, publicipField)
+		fieldSlice = append(fieldSlice, sgField)
 		fieldSlice = append(fieldSlice, amiField)
 
 		fieldsSection := slack.NewSectionBlock(nil, fieldSlice, nil)
@@ -122,15 +124,23 @@ func (repo Slack) ELBv1ephemeralMessage(channel string, message []domain.ELBv1Di
 		headerSection := slack.NewSectionBlock(headerText, nil, nil)
 
 		// Fields
-		elbv1nameField := slack.NewTextBlockObject("mrkdwn", fmt.Sprintf("*ELB Name:*\n%s", v["Elbv1Name"]), false, false)
-		elbv1dnsnameField := slack.NewTextBlockObject("mrkdwn", fmt.Sprintf("*ELB DNS Name:*\n%s", v["Elbv1DNSName"]), false, false)
-		elbv1schemeField := slack.NewTextBlockObject("mrkdwn", fmt.Sprintf("*ELB Scheme:*\n%s", v["Elbv1Scheme"]), false, false)
-		elbv1dateField := slack.NewTextBlockObject("mrkdwn", fmt.Sprintf("*ELB Creation Date:*\n%s", v["Elbv1CreationDate"]), false, false)
+		elbv1nameField := slack.NewTextBlockObject("mrkdwn", fmt.Sprintf("*Name:*\n%s", v["Elbv1Name"]), false, false)
+		elbv1dnsnameField := slack.NewTextBlockObject("mrkdwn", fmt.Sprintf("*DNS Name:*\n%s", v["Elbv1DNSName"]), false, false)
+		elbv1schemeField := slack.NewTextBlockObject("mrkdwn", fmt.Sprintf("*Scheme:*\n%s", v["Elbv1Scheme"]), false, false)
+		elbv1ec2Field := slack.NewTextBlockObject("mrkdwn", fmt.Sprintf("*Attached EC2:*\n%s", v["Elbv1AttachedEC2"]), false, false)
+		elbv1sgField := slack.NewTextBlockObject("mrkdwn", fmt.Sprintf("*SecurityGroup ID:*\n%s", v["Elbv1SecurityGroupID"]), false, false)
+		elbv1vpcField := slack.NewTextBlockObject("mrkdwn", fmt.Sprintf("*Vpc ID:*\n%s", v["Elbv1VpcID"]), false, false)
+		elbv1subnetField := slack.NewTextBlockObject("mrkdwn", fmt.Sprintf("*Subnet ID:*\n%s", v["Elbv1SubnetID"]), false, false)
+		elbv1dateField := slack.NewTextBlockObject("mrkdwn", fmt.Sprintf("*Creation Date:*\n%s", v["Elbv1CreationDate"]), false, false)
 
 		fieldSlice := make([]*slack.TextBlockObject, 0)
 		fieldSlice = append(fieldSlice, elbv1nameField)
 		fieldSlice = append(fieldSlice, elbv1dnsnameField)
 		fieldSlice = append(fieldSlice, elbv1schemeField)
+		fieldSlice = append(fieldSlice, elbv1ec2Field)
+		fieldSlice = append(fieldSlice, elbv1sgField)
+		fieldSlice = append(fieldSlice, elbv1vpcField)
+		fieldSlice = append(fieldSlice, elbv1subnetField)
 		fieldSlice = append(fieldSlice, elbv1dateField)
 
 		fieldsSection := slack.NewSectionBlock(nil, fieldSlice, nil)
@@ -151,17 +161,23 @@ func (repo Slack) ELBv2ephemeralMessage(channel string, message []domain.ELBv2Di
 		headerSection := slack.NewSectionBlock(headerText, nil, nil)
 
 		// Fields
-		elbv2nameField := slack.NewTextBlockObject("mrkdwn", fmt.Sprintf("*ELB Name:*\n%s", v["Elbv2Name"]), false, false)
-		elbv2dnsnameField := slack.NewTextBlockObject("mrkdwn", fmt.Sprintf("*ELB DNS Name:*\n%s", v["Elbv2DNSName"]), false, false)
-		elbv2schemeField := slack.NewTextBlockObject("mrkdwn", fmt.Sprintf("*ELB Scheme:*\n%s", v["Elbv2Scheme"]), false, false)
-		elbv2statusField := slack.NewTextBlockObject("mrkdwn", fmt.Sprintf("*ELB Status:*\n%s", v["ELBv2Status"]), false, false)
-		elbv2dateField := slack.NewTextBlockObject("mrkdwn", fmt.Sprintf("*ELB Creation Date:*\n%s", v["Elbv2CreationDate"]), false, false)
+		elbv2nameField := slack.NewTextBlockObject("mrkdwn", fmt.Sprintf("*Name:*\n%s", v["Elbv2Name"]), false, false)
+		elbv2dnsnameField := slack.NewTextBlockObject("mrkdwn", fmt.Sprintf("*DNS Name:*\n%s", v["Elbv2DNSName"]), false, false)
+		elbv2schemeField := slack.NewTextBlockObject("mrkdwn", fmt.Sprintf("*Scheme:*\n%s", v["Elbv2Scheme"]), false, false)
+		elbv2statusField := slack.NewTextBlockObject("mrkdwn", fmt.Sprintf("*Status:*\n%s", v["ELBv2Status"]), false, false)
+		elbv2vpcField := slack.NewTextBlockObject("mrkdwn", fmt.Sprintf("*Vpc ID:*\n%s", v["ELBv2VpcID"]), false, false)
+		elbv2availzonesField := slack.NewTextBlockObject("mrkdwn", fmt.Sprintf("*Availability Zones:*\n%s", v["ELBv2AvailabilityZones"]), false, false)
+		elbv2sgField := slack.NewTextBlockObject("mrkdwn", fmt.Sprintf("*SecurityGroup ID:*\n%s", v["ELBv2SecurityGroupID"]), false, false)
+		elbv2dateField := slack.NewTextBlockObject("mrkdwn", fmt.Sprintf("*Creation Date:*\n%s", v["Elbv2CreationDate"]), false, false)
 
 		fieldSlice := make([]*slack.TextBlockObject, 0)
 		fieldSlice = append(fieldSlice, elbv2nameField)
 		fieldSlice = append(fieldSlice, elbv2dnsnameField)
 		fieldSlice = append(fieldSlice, elbv2schemeField)
 		fieldSlice = append(fieldSlice, elbv2statusField)
+		fieldSlice = append(fieldSlice, elbv2vpcField)
+		fieldSlice = append(fieldSlice, elbv2availzonesField)
+		fieldSlice = append(fieldSlice, elbv2sgField)
 		fieldSlice = append(fieldSlice, elbv2dateField)
 
 		fieldsSection := slack.NewSectionBlock(nil, fieldSlice, nil)

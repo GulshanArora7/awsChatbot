@@ -48,7 +48,11 @@ func AwsGetInstances(awsRegion string, status string) []domain.EC2Dictionary {
 	for _, reservation := range result.Reservations {
 		for _, instance := range reservation.Instances {
 			if !strings.EqualFold(*instance.State.Name, "terminated") {
-				ec2dict := domain.EC2Dictionary{"InstanceId": *instance.InstanceId, "InstanceType": *instance.InstanceType, "PrivateIP": *instance.PrivateIpAddress, "State": *instance.State.Name, "ImageID": *instance.ImageId, "PublicIP": *instance.PublicIpAddress, "VpcID": *instance.VpcId, "SubnetID": *instance.SubnetId}
+				var ec2securitygroups string
+				for _, ec2sgval := range instance.SecurityGroups {
+					ec2securitygroups += fmt.Sprintf("%s ", *ec2sgval.GroupId)
+				}
+				ec2dict := domain.EC2Dictionary{"InstanceId": *instance.InstanceId, "InstanceType": *instance.InstanceType, "PrivateIP": *instance.PrivateIpAddress, "State": *instance.State.Name, "ImageID": *instance.ImageId, "PublicIP": *instance.PublicIpAddress, "VpcID": *instance.VpcId, "SubnetID": *instance.SubnetId, "SecurityGroupID": ec2securitygroups}
 				ec2data = append(ec2data, ec2dict)
 			}
 		}
@@ -84,7 +88,11 @@ func AwsGetInstancesTag(awsRegion string, tags map[string]string) []domain.EC2Di
 	for _, reservation := range result.Reservations {
 		for _, instance := range reservation.Instances {
 			if !strings.EqualFold(*instance.State.Name, "terminated") {
-				ec2dict := domain.EC2Dictionary{"InstanceId": *instance.InstanceId, "InstanceType": *instance.InstanceType, "PrivateIP": *instance.PrivateIpAddress, "State": *instance.State.Name, "ImageID": *instance.ImageId, "PublicIP": *instance.PublicIpAddress, "VpcID": *instance.VpcId, "SubnetID": *instance.SubnetId}
+				var ec2securitygroups string
+				for _, ec2sgval := range instance.SecurityGroups {
+					ec2securitygroups += fmt.Sprintf("%s ", *ec2sgval.GroupId)
+				}
+				ec2dict := domain.EC2Dictionary{"InstanceId": *instance.InstanceId, "InstanceType": *instance.InstanceType, "PrivateIP": *instance.PrivateIpAddress, "State": *instance.State.Name, "ImageID": *instance.ImageId, "PublicIP": *instance.PublicIpAddress, "VpcID": *instance.VpcId, "SubnetID": *instance.SubnetId, "SecurityGroupID": ec2securitygroups}
 				ec2data = append(ec2data, ec2dict)
 			}
 		}
@@ -299,7 +307,19 @@ func AwsGetELBv1(awsRegion string) []domain.ELBv1Dictionary {
 	}
 	elbv1data := []domain.ELBv1Dictionary{}
 	for _, elbdetails := range elbout.LoadBalancerDescriptions {
-		elbv1dict := domain.ELBv1Dictionary{"Elbv1Name": *elbdetails.LoadBalancerName, "Elbv1DNSName": *elbdetails.DNSName, "Elbv1Scheme": *elbdetails.Scheme, "Elbv1CreationDate": aws.Time(*elbdetails.CreatedTime)}
+		var elbv1securitygroups string
+		var instanceid string
+		var subnetid string
+		for _, elbv1sgval := range elbdetails.SecurityGroups {
+			elbv1securitygroups += fmt.Sprintf("%s ", *elbv1sgval)
+		}
+		for _, insval := range elbdetails.Instances {
+			instanceid += fmt.Sprintf("%s ", *insval.InstanceId)
+		}
+		for _, subnetval := range elbdetails.Subnets {
+			subnetid += fmt.Sprintf("%s ", *subnetval)
+		}
+		elbv1dict := domain.ELBv1Dictionary{"Elbv1Name": *elbdetails.LoadBalancerName, "Elbv1DNSName": *elbdetails.DNSName, "Elbv1Scheme": *elbdetails.Scheme, "Elbv1CreationDate": aws.Time(*elbdetails.CreatedTime), "Elbv1SecurityGroupID": elbv1securitygroups, "Elbv1AttachedEC2": instanceid, "Elbv1VpcID": *elbdetails.VPCId, "Elbv1SubnetID": subnetid}
 		elbv1data = append(elbv1data, elbv1dict)
 	}
 	return elbv1data
@@ -345,7 +365,19 @@ func AwsGetELBv1Tag(awsRegion string, tags map[string]string) []domain.ELBv1Dict
 
 	elbv1data := []domain.ELBv1Dictionary{}
 	for _, elbdetails := range elbout.LoadBalancerDescriptions {
-		elbv1dict := domain.ELBv1Dictionary{"Elbv1Name": *elbdetails.LoadBalancerName, "Elbv1DNSName": *elbdetails.DNSName, "Elbv1Scheme": *elbdetails.Scheme, "Elbv1CreationDate": aws.Time(*elbdetails.CreatedTime)}
+		var elbv1securitygroups string
+		var instanceid string
+		var subnetid string
+		for _, elbv1val := range elbdetails.SecurityGroups {
+			elbv1securitygroups += fmt.Sprintf("%s ", *elbv1val)
+		}
+		for _, insval := range elbdetails.Instances {
+			instanceid += fmt.Sprintf("%s ", *insval.InstanceId)
+		}
+		for _, subnetval := range elbdetails.Subnets {
+			subnetid += fmt.Sprintf("%s ", *subnetval)
+		}
+		elbv1dict := domain.ELBv1Dictionary{"Elbv1Name": *elbdetails.LoadBalancerName, "Elbv1DNSName": *elbdetails.DNSName, "Elbv1Scheme": *elbdetails.Scheme, "Elbv1CreationDate": aws.Time(*elbdetails.CreatedTime), "Elbv1SecurityGroupID": elbv1securitygroups, "Elbv1AttachedEC2": instanceid, "Elbv1VpcID": *elbdetails.VPCId, "Elbv1SubnetID": subnetid}
 		elbv1data = append(elbv1data, elbv1dict)
 	}
 	return elbv1data
@@ -388,7 +420,15 @@ func AwsGetELBv2(awsRegion string) []domain.ELBv2Dictionary {
 
 	elbv2data := []domain.ELBv2Dictionary{}
 	for _, elbv2details := range elbv2out.LoadBalancers {
-		elbv2dict := domain.ELBv2Dictionary{"Elbv2Name": *elbv2details.LoadBalancerName, "Elbv2DNSName": *elbv2details.DNSName, "Elbv2Scheme": *elbv2details.Scheme, "ELBv2Status": *elbv2details.State.Code, "Elbv2CreationDate": aws.Time(*elbv2details.CreatedTime)}
+		var elbv2securitygroups string
+		var availzones string
+		for _, elbv2sgval := range elbv2details.SecurityGroups {
+			elbv2securitygroups += fmt.Sprintf("%s ", *elbv2sgval)
+		}
+		for _, availzonesval := range elbv2details.AvailabilityZones {
+			availzones += fmt.Sprintf("(%s <--> %s) ", *availzonesval.SubnetId, *availzonesval.ZoneName)
+		}
+		elbv2dict := domain.ELBv2Dictionary{"Elbv2Name": *elbv2details.LoadBalancerName, "Elbv2DNSName": *elbv2details.DNSName, "Elbv2Scheme": *elbv2details.Scheme, "ELBv2Status": *elbv2details.State.Code, "Elbv2CreationDate": aws.Time(*elbv2details.CreatedTime), "ELBv2VpcID": *elbv2details.VpcId, "ELBv2AvailabilityZones": availzones, "ELBv2SecurityGroupID": elbv2securitygroups}
 		elbv2data = append(elbv2data, elbv2dict)
 	}
 	return elbv2data
@@ -451,7 +491,15 @@ func AwsGetELBv2Tag(awsRegion string, tags map[string]string) []domain.ELBv2Dict
 				}
 			}
 			for _, details := range result.LoadBalancers {
-				elbv2dict := domain.ELBv2Dictionary{"Elbv2Name": *details.LoadBalancerName, "Elbv2DNSName": *details.DNSName, "Elbv2Scheme": *details.Scheme, "ELBv2Status": *details.State.Code, "Elbv2CreationDate": aws.Time(*details.CreatedTime)}
+				var elbv2securitygroups string
+				var availzones string
+				for _, elbv2sgval := range details.SecurityGroups {
+					elbv2securitygroups += fmt.Sprintf("%s ", *elbv2sgval)
+				}
+				for _, availzonesval := range details.AvailabilityZones {
+					availzones += fmt.Sprintf("(%s <--> %s) ", *availzonesval.SubnetId, *availzonesval.ZoneName)
+				}
+				elbv2dict := domain.ELBv2Dictionary{"Elbv2Name": *details.LoadBalancerName, "Elbv2DNSName": *details.DNSName, "Elbv2Scheme": *details.Scheme, "ELBv2Status": *details.State.Code, "Elbv2CreationDate": aws.Time(*details.CreatedTime), "ELBv2VpcID": *details.VpcId, "ELBv2AvailabilityZones": availzones, "ELBv2SecurityGroupID": elbv2securitygroups}
 				elbv2data = append(elbv2data, elbv2dict)
 			}
 		}

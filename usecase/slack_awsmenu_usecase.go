@@ -213,7 +213,7 @@ func SendAwsmenuSlackPost(userid string, channel string, message map[string]stri
 		attachment := slack.Attachment{}
 		attachment.Color = "#36a64f"
 		attachment.Pretext = "Chatbot Help"
-		attachment.Title = "Supported AWS Service - ec2, s3, sg or securitygroup, elbv1, elbv2"
+		attachment.Title = "Supported AWS Service - ec2, s3, sg or securitygroup, elbv1, elbv2, rds"
 		attachment.Text = "Usage Example: /awsChatbot ec2"
 		attachment.CallbackID = "Invalid"
 		err := repo.EphemeralMenuMessage(channel, attachment)

@@ -27,6 +27,9 @@ type SlackRepository interface {
 	// ELBv2ephemeralMessage func send a message with attachment using channelID, and textMessage and return an error
 	ELBv2ephemeralMessage(channel string, message []ELBv2Dictionary) error
 
+	// RDSephemeralMessage func send a message with attachment using channelID, and textMessage and return an error
+	RDSephemeralMessage(channel string, message []RDSDictionary) error
+
 	// OpenDialogMenu func send a message with triggerID and dialogue box
 	OpenDialogMenu(triggerID string, dialogue slack.Dialog) error
 
@@ -56,3 +59,6 @@ type ELBv1Dictionary map[string]interface{}
 
 // ELBv2Dictionary interface
 type ELBv2Dictionary map[string]interface{}
+
+// RDSDictionary interface
+type RDSDictionary map[string]interface{}

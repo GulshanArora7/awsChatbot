@@ -45,7 +45,7 @@ func SlackActionEvent(data *slack.InteractionCallback, context echo.Context) (sl
 			}
 			title := strings.Join(strings.Fields(value)[0:3], " ")
 
-			textInput := slack.NewTextInput("TAGNAME", "Name", "Enter Tag Name")
+			textInput := slack.NewTextInput("TAGKEY", "Key", "Enter Tag Key")
 			textInput1 := slack.NewTextInput("TAGVALUE", "Value", "Enter Tag Value")
 
 			// Open a dialog
@@ -109,7 +109,7 @@ func SlackActionEvent(data *slack.InteractionCallback, context echo.Context) (sl
 			}
 			title := strings.Join(strings.Fields(value)[0:3], " ")
 
-			textInput := slack.NewTextInput("TAGNAME", "Name", "Enter Tag Name")
+			textInput := slack.NewTextInput("TAGKEY", "Key", "Enter Tag Key")
 			textInput1 := slack.NewTextInput("TAGVALUE", "Value", "Enter Tag Value")
 
 			// Open a dialog
@@ -143,6 +143,37 @@ func SlackActionEvent(data *slack.InteractionCallback, context echo.Context) (sl
 			title := strings.Join(strings.Fields(value)[0:2], " ")
 
 			textInput := slack.NewTextInput("ELBNAME", "ELB Name", "Enter ELB Name")
+
+			// Open a dialog
+			elements := []slack.DialogElement{
+				textInput,
+			}
+			dialog := slack.Dialog{
+				CallbackID:  data.CallbackID,
+				State:       value,
+				Title:       title,
+				SubmitLabel: "Submit",
+				Elements:    elements,
+			}
+			err := repo.OpenDialogMenu(data.TriggerID, dialog)
+			if err != nil {
+				log.Printf("[ERROR] Unable to send dialog to Slack Channel %s", err)
+			}
+			response = originalMessage
+		} else if utils.StringInSlice("Name", k) && utils.StringInSlice("DB", k) {
+			originalMessage := data.OriginalMessage
+			originalMessage.ReplaceOriginal = true
+			originalMessage.Attachments[0].Text = fmt.Sprintf("%s", value)
+			originalMessage.Attachments[0].Actions = []slack.AttachmentAction{}
+			originalMessage.Attachments[0].Fields = []slack.AttachmentField{
+				{
+					Title: "Enter Details in Dialogue Box to Process..!!",
+					Short: false,
+				},
+			}
+			title := strings.Join(strings.Fields(value)[0:3], " ")
+
+			textInput := slack.NewTextInput("RDSDBNAME", "RDS DB Name", "Enter RDS DB Name")
 
 			// Open a dialog
 			elements := []slack.DialogElement{
@@ -222,7 +253,7 @@ func SlackActionEvent(data *slack.InteractionCallback, context echo.Context) (sl
 				log.Printf("[ERROR] Unable to send message to Slack Channel %s", err)
 			}
 		} else {
-			noResult := fmt.Sprintf("No v1 ELB Found in %s region your AWS Account..!!", config.AwsRegion)
+			noResult := fmt.Sprintf("No v1 ELB Found in %s region in your AWS Account..!!", config.AwsRegion)
 			err := repo.BlankResultSlackMsg(config.SlackChanneliD, noResult)
 			if err != nil {
 				log.Printf("[ERROR] Unable to send message to Slack Channel %s", err)
@@ -284,6 +315,20 @@ func SlackActionEvent(data *slack.InteractionCallback, context echo.Context) (sl
 				log.Printf("[ERROR] Unable to send message to Slack Channel %s", err)
 			}
 		}
+	} else if strings.EqualFold(answer, "accepted") && status[3] == "DB" {
+		result := awsclient.AwsGetRDS(config.AwsRegion)
+		if len(result) > 0 {
+			err := repo.RDSephemeralMessage(config.SlackChanneliD, result)
+			if err != nil {
+				log.Printf("[ERROR] Unable to send message to Slack Channel %s", err)
+			}
+		} else {
+			noResult := fmt.Sprintf("No RDS DB Instances Found in %s in your AWS Account..!!", config.AwsRegion)
+			err := repo.BlankResultSlackMsg(config.SlackChanneliD, noResult)
+			if err != nil {
+				log.Printf("[ERROR] Unable to send message to Slack Channel %s", err)
+			}
+		}
 	}
 	return response, nil
 }
@@ -300,7 +345,7 @@ func SlackDialogSubmissionEvent(data *slack.InteractionCallback, context echo.Co
 				log.Printf("[ERROR] Unable to send message to Slack Channel %s", err)
 			}
 		} else {
-			noResult := fmt.Sprintf("No Such EC2 Instance Exists in %s region in your AWS Account..!! Please check your Input..!!", config.AwsRegion)
+			noResult := fmt.Sprintf("No Such EC2 Instance in %s region exists in your AWS Account..!! Please check your Input..!!", config.AwsRegion)
 			err := repo.BlankResultSlackMsg(config.SlackChanneliD, noResult)
 			if err != nil {
 				log.Printf("[ERROR] Unable to send message to Slack Channel %s", err)
@@ -342,7 +387,7 @@ func SlackDialogSubmissionEvent(data *slack.InteractionCallback, context echo.Co
 				log.Printf("[ERROR] Unable to send message to Slack Channel %s", err)
 			}
 		} else {
-			noResult := fmt.Sprintf("No Such v1 ELB Exists in your AWS Account..!! Please check your Input..!!")
+			noResult := fmt.Sprintf("No Such v1 ELB in %s region exists in your AWS Account..!! Please check your Input..!!", config.AwsRegion)
 			err := repo.BlankResultSlackMsg(config.SlackChanneliD, noResult)
 			if err != nil {
 				log.Printf("[ERROR] Unable to send message to Slack Channel %s", err)
@@ -356,7 +401,21 @@ func SlackDialogSubmissionEvent(data *slack.InteractionCallback, context echo.Co
 				log.Printf("[ERROR] Unable to send message to Slack Channel %s", err)
 			}
 		} else {
-			noResult := fmt.Sprintf("No Such v2 ELB Exists in your AWS Account..!! Please check your Input..!!")
+			noResult := fmt.Sprintf("No Such v2 ELB in %s region exists in your AWS Account..!! Please check your Input..!!", config.AwsRegion)
+			err := repo.BlankResultSlackMsg(config.SlackChanneliD, noResult)
+			if err != nil {
+				log.Printf("[ERROR] Unable to send message to Slack Channel %s", err)
+			}
+		}
+	} else if strings.EqualFold(choosedOption[0], "List") && choosedOption[2] == "DB" {
+		result := awsclient.AwsGetRDSTag(config.AwsRegion, data.Submission)
+		if len(result) > 0 {
+			err := repo.RDSephemeralMessage(config.SlackChanneliD, result)
+			if err != nil {
+				log.Printf("[ERROR] Unable to send message to Slack Channel %s", err)
+			}
+		} else {
+			noResult := fmt.Sprintf("No Such RDS DB in %s exists in your AWS Account..!! Please check your Input..!!", config.AwsRegion)
 			err := repo.BlankResultSlackMsg(config.SlackChanneliD, noResult)
 			if err != nil {
 				log.Printf("[ERROR] Unable to send message to Slack Channel %s", err)

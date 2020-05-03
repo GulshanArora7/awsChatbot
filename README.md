@@ -3,7 +3,7 @@ Slack Project --> AWS ChatBot
 AWSChatBot
 ==========
 
-awsChatbot can listen to slash commands initiated by user from configured slack channel to interact with supported AWS services and provide required result. Currently it supports AWS Services like EC2, S3, SecurityGroup, ELBv1, ELBv2.
+awsChatbot can listen to slash commands initiated by user from configured slack channel to interact with supported AWS services and provide required result. Currently it supports AWS Services like EC2, S3, SecurityGroup, ELBv1, ELBv2, RDS DB.
 
 ## Supported AWS Services (v1.0)
 - AWS EC2
@@ -11,6 +11,7 @@ awsChatbot can listen to slash commands initiated by user from configured slack 
 - AWS SecurityGroup 
 - AWS ELBv1 (Classic LoadBalancer) 
 - AWS ELBv2 (Application or Network LoadBalancer)
+- AWS RDS DB Instances
 
 ## Build Application from Command Line Terminal and Run Locally
 ```sh
@@ -90,6 +91,10 @@ http://localhost:9090/awschatbot/v1/health
 * Get SecurityGroup Details
 
 ![Alt Text](https://raw.githubusercontent.com/GulshanArora7/awsChatbot/master/gif-image/sg_slack.gif)
+
+* Get RDS Details
+
+![Alt Text](https://raw.githubusercontent.com/GulshanArora7/awsChatbot/master/gif-image/rds_slack.gif)
 
 ## Reference Links
 * [AWS SDK Golang](https://docs.aws.amazon.com/sdk-for-go/api/)

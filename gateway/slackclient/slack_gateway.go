@@ -190,6 +190,43 @@ func (repo Slack) ELBv2ephemeralMessage(channel string, message []domain.ELBv2Di
 	return nil
 }
 
+// RDSephemeralMessage Func
+func (repo Slack) RDSephemeralMessage(channel string, message []domain.RDSDictionary) error {
+	for _, v := range message {
+		// Header Section
+		headerText := slack.NewTextBlockObject("mrkdwn", "*AWS RDS DETAILS*", false, false)
+		headerSection := slack.NewSectionBlock(headerText, nil, nil)
+
+		// Fields
+		rdsdbnameField := slack.NewTextBlockObject("mrkdwn", fmt.Sprintf("*Name:*\n%s", v["rdsDBName"]), false, false)
+		rdsdbarnField := slack.NewTextBlockObject("mrkdwn", fmt.Sprintf("*DB ARN:*\n%s", v["rdsDBArn"]), false, false)
+		rdsdbstatusField := slack.NewTextBlockObject("mrkdwn", fmt.Sprintf("*Status:*\n%s", v["rdsStatus"]), false, false)
+		rdsinstypeField := slack.NewTextBlockObject("mrkdwn", fmt.Sprintf("*Instance Type:*\n%s", v["rdsInstanceclass"]), false, false)
+		rdsavailzonesField := slack.NewTextBlockObject("mrkdwn", fmt.Sprintf("*Availability Zones:*\n%s", v["rdsAvailabilityZone"]), false, false)
+		rdsengineField := slack.NewTextBlockObject("mrkdwn", fmt.Sprintf("*Engine Details:*\n%s", v["rdsEngineDetails"]), false, false)
+		rdsmultiazField := slack.NewTextBlockObject("mrkdwn", fmt.Sprintf("*Multi AZ:*\n%t", v["rdsMultiAZ"]), false, false)
+		rdsdbpargroupField := slack.NewTextBlockObject("mrkdwn", fmt.Sprintf("*DB ParameterGroup:*\n%s", v["rdsDBParameterGroup"]), false, false)
+
+		fieldSlice := make([]*slack.TextBlockObject, 0)
+		fieldSlice = append(fieldSlice, rdsdbnameField)
+		fieldSlice = append(fieldSlice, rdsdbarnField)
+		fieldSlice = append(fieldSlice, rdsdbstatusField)
+		fieldSlice = append(fieldSlice, rdsinstypeField)
+		fieldSlice = append(fieldSlice, rdsavailzonesField)
+		fieldSlice = append(fieldSlice, rdsengineField)
+		fieldSlice = append(fieldSlice, rdsmultiazField)
+		fieldSlice = append(fieldSlice, rdsdbpargroupField)
+
+		fieldsSection := slack.NewSectionBlock(nil, fieldSlice, nil)
+
+		_, _, err := repo.Client.PostMessage(channel, slack.MsgOptionBlocks(headerSection, fieldsSection))
+		if err != nil {
+			log.Printf("[ERROR] Unable to send message to Slack Channel %s", err)
+		}
+	}
+	return nil
+}
+
 // EphemeralMenuMessage func
 func (repo Slack) EphemeralMenuMessage(channel string, attachment slack.Attachment) error {
 	_, _, err := repo.Client.PostMessage(channel, slack.MsgOptionAttachments(attachment))

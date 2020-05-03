@@ -13,6 +13,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/elb"
 	"github.com/aws/aws-sdk-go/service/elbv2"
+	"github.com/aws/aws-sdk-go/service/rds"
 	"github.com/aws/aws-sdk-go/service/s3"
 )
 
@@ -24,6 +25,7 @@ func checkError(e error) {
 
 // AwsGetInstances func
 func AwsGetInstances(awsRegion string, status string) []domain.EC2Dictionary {
+
 	sess := session.Must(session.NewSessionWithOptions(session.Options{
 		SharedConfigState: session.SharedConfigEnable,
 	}))
@@ -62,7 +64,8 @@ func AwsGetInstances(awsRegion string, status string) []domain.EC2Dictionary {
 
 // AwsGetInstancesTag func
 func AwsGetInstancesTag(awsRegion string, tags map[string]string) []domain.EC2Dictionary {
-	tagName := fmt.Sprintf("tag:%s", tags["TAGNAME"])
+
+	tagName := fmt.Sprintf("tag:%s", tags["TAGKEY"])
 	tagValue := tags["TAGVALUE"]
 	sess := session.Must(session.NewSessionWithOptions(session.Options{
 		SharedConfigState: session.SharedConfigEnable,
@@ -102,6 +105,7 @@ func AwsGetInstancesTag(awsRegion string, tags map[string]string) []domain.EC2Di
 
 // AwsGetS3Buckets func
 func AwsGetS3Buckets(awsRegion string) []domain.S3Dictionary {
+
 	sess := session.Must(session.NewSessionWithOptions(session.Options{
 		SharedConfigState: session.SharedConfigEnable,
 	}))
@@ -133,6 +137,7 @@ func AwsGetS3Buckets(awsRegion string) []domain.S3Dictionary {
 
 // AwsGetS3BucketsTag func
 func AwsGetS3BucketsTag(awsRegion string, tags map[string]string) []domain.S3Dictionary {
+
 	bucketName := tags["BUCKETNAME"]
 	sess := session.Must(session.NewSessionWithOptions(session.Options{
 		SharedConfigState: session.SharedConfigEnable,
@@ -216,7 +221,7 @@ func AwsGetSecGroup(awsRegion string) []domain.SGDictionary {
 // AwsGetSecGroupTag func
 func AwsGetSecGroupTag(awsRegion string, tags map[string]string) []domain.SGDictionary {
 
-	tagName := fmt.Sprintf("tag:%s", tags["TAGNAME"])
+	tagName := fmt.Sprintf("tag:%s", tags["TAGKEY"])
 	tagValue := tags["TAGVALUE"]
 
 	sess := session.Must(session.NewSessionWithOptions(session.Options{
@@ -278,7 +283,7 @@ func AwsGetELBv1(awsRegion string) []domain.ELBv1Dictionary {
 		SharedConfigState: session.SharedConfigEnable,
 	}))
 
-	elbSvc := elb.New(sess, &aws.Config{Region: aws.String("eu-central-1")})
+	elbSvc := elb.New(sess, &aws.Config{Region: aws.String(awsRegion)})
 	_, cerr := elbSvc.Config.Credentials.Get()
 
 	if cerr != nil {
@@ -333,7 +338,7 @@ func AwsGetELBv1Tag(awsRegion string, tags map[string]string) []domain.ELBv1Dict
 		SharedConfigState: session.SharedConfigEnable,
 	}))
 
-	elbSvc := elb.New(sess, &aws.Config{Region: aws.String("eu-central-1")})
+	elbSvc := elb.New(sess, &aws.Config{Region: aws.String(awsRegion)})
 	_, cerr := elbSvc.Config.Credentials.Get()
 
 	if cerr != nil {
@@ -390,7 +395,7 @@ func AwsGetELBv2(awsRegion string) []domain.ELBv2Dictionary {
 		SharedConfigState: session.SharedConfigEnable,
 	}))
 
-	elbv2Svc := elbv2.New(sess, &aws.Config{Region: aws.String("eu-central-1")})
+	elbv2Svc := elbv2.New(sess, &aws.Config{Region: aws.String(awsRegion)})
 	_, cerr := elbv2Svc.Config.Credentials.Get()
 
 	if cerr != nil {
@@ -442,7 +447,7 @@ func AwsGetELBv2Tag(awsRegion string, tags map[string]string) []domain.ELBv2Dict
 		SharedConfigState: session.SharedConfigEnable,
 	}))
 
-	elbv2Svc := elbv2.New(sess, &aws.Config{Region: aws.String("eu-central-1")})
+	elbv2Svc := elbv2.New(sess, &aws.Config{Region: aws.String(awsRegion)})
 	_, cerr := elbv2Svc.Config.Credentials.Get()
 
 	if cerr != nil {
@@ -505,4 +510,92 @@ func AwsGetELBv2Tag(awsRegion string, tags map[string]string) []domain.ELBv2Dict
 		}
 	}
 	return elbv2data
+}
+
+// AwsGetRDS func
+func AwsGetRDS(awsRegion string) []domain.RDSDictionary {
+
+	sess := session.Must(session.NewSessionWithOptions(session.Options{
+		SharedConfigState: session.SharedConfigEnable,
+	}))
+
+	rdsSvc := rds.New(sess, &aws.Config{Region: aws.String(awsRegion)})
+	_, cerr := rdsSvc.Config.Credentials.Get()
+
+	if cerr != nil {
+		log.Printf("ERROR..!!..Unable to find AWS Crendentials..Please Check..!!")
+	}
+
+	rdsInput := &rds.DescribeDBInstancesInput{
+		MaxRecords: aws.Int64(100),
+	}
+
+	rdsout, err := rdsSvc.DescribeDBInstances(rdsInput)
+
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case rds.ErrCodeDBInstanceNotFoundFault:
+				fmt.Println(rds.ErrCodeDBInstanceNotFoundFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			fmt.Println(err.Error())
+		}
+	}
+	rdsdata := []domain.RDSDictionary{}
+	for _, rdsdetails := range rdsout.DBInstances {
+		var dbparametergroup string
+		for _, dbparvalue := range rdsdetails.DBParameterGroups {
+			dbparametergroup += fmt.Sprintf("%s ", *dbparvalue.DBParameterGroupName)
+		}
+		rdsdict := domain.RDSDictionary{"rdsDBName": *rdsdetails.DBInstanceIdentifier, "rdsDBArn": *rdsdetails.DBInstanceArn, "rdsStatus": *rdsdetails.DBInstanceStatus, "rdsInstanceclass": *rdsdetails.DBInstanceClass, "rdsAvailabilityZone": *rdsdetails.AvailabilityZone, "rdsEngineDetails": fmt.Sprintf("%s v%s", *rdsdetails.Engine, *rdsdetails.EngineVersion), "rdsMultiAZ": *rdsdetails.MultiAZ, "rdsDBParameterGroup": dbparametergroup}
+		rdsdata = append(rdsdata, rdsdict)
+	}
+	return rdsdata
+}
+
+// AwsGetRDSTag func
+func AwsGetRDSTag(awsRegion string, tags map[string]string) []domain.RDSDictionary {
+
+	sess := session.Must(session.NewSessionWithOptions(session.Options{
+		SharedConfigState: session.SharedConfigEnable,
+	}))
+
+	rdsSvc := rds.New(sess, &aws.Config{Region: aws.String(awsRegion)})
+	_, cerr := rdsSvc.Config.Credentials.Get()
+
+	if cerr != nil {
+		log.Printf("ERROR..!!..Unable to find AWS Crendentials..Please Check..!!")
+	}
+
+	rdsInput := &rds.DescribeDBInstancesInput{
+		DBInstanceIdentifier: aws.String(tags["RDSDBNAME"]),
+	}
+
+	rdsout, err := rdsSvc.DescribeDBInstances(rdsInput)
+
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case rds.ErrCodeDBInstanceNotFoundFault:
+				fmt.Println(rds.ErrCodeDBInstanceNotFoundFault, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			fmt.Println(err.Error())
+		}
+	}
+	rdsdata := []domain.RDSDictionary{}
+	for _, rdsdetails := range rdsout.DBInstances {
+		var dbparametergroup string
+		for _, dbparvalue := range rdsdetails.DBParameterGroups {
+			dbparametergroup += fmt.Sprintf("%s ", *dbparvalue.DBParameterGroupName)
+		}
+		rdsdict := domain.RDSDictionary{"rdsDBName": *rdsdetails.DBInstanceIdentifier, "rdsDBArn": *rdsdetails.DBInstanceArn, "rdsStatus": *rdsdetails.DBInstanceStatus, "rdsInstanceclass": *rdsdetails.DBInstanceClass, "rdsAvailabilityZone": *rdsdetails.AvailabilityZone, "rdsEngineDetails": fmt.Sprintf("%s v%s", *rdsdetails.Engine, *rdsdetails.EngineVersion), "rdsMultiAZ": *rdsdetails.MultiAZ, "rdsDBParameterGroup": dbparametergroup}
+		rdsdata = append(rdsdata, rdsdict)
+	}
+	return rdsdata
 }
